@@ -1,0 +1,51 @@
+---
+title: "class-11-5-2019"
+author: "Jeremy Ornstein"
+date: "11/5/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(moderndive)
+library(infer)
+library(tidyverse)
+```
+
+
+score age gender 
+
+```{r}
+regress <- lm(score ~ age + gender, data = evals) 
+```
+
+```{r}
+evals %>%
+  specify(response = age) %>%
+generate(reps = 1000, type = "bootstrap") %>% 
+calculate(stat = "mean") %>%
+  ggplot(aes(x = stat)) + 
+  geom_histogram()
+
+evals %>%
+  rep_sample_n(size = 463, replace = TRUE< reps = 1000) %>%
+  group_by(replicate) %>% 
+  summarize(mean_age = mean(age)) %>%
+  summarize(lower = quantile(mean_age, probs = 0.025),
+            upper = quantile(mean_age, probs = 0.975))
+ 
+evals %>%
+  rep_sample_n(size = 463, replace = TRUE, reps = 100) %>%
+  group_by(replicate) %>% 
+  nest() %>% 
+  mutate(results = map(data, ~lm(score ~ age + gender, data = .x))) %>%
+  mutate(coefficients = map(results, ~ coef(.x))) %>% 
+  mutate(age_coef = map_dbl(coefficients, ~pluck(.x, "age"))) %>%
+  ungroup() %>%
+  summarize(lower = quantile(age_coef, probs = 0.025),
+            upper = quantile(age_coef, probs = 0.975))
+
+
+
+```
+
